@@ -183,3 +183,35 @@ class QueryProcessor:
         results.sort(key=lambda x: x["relevance_score"], reverse=True)
         
         return results[:top_k]
+
+    def synthesize_themes(self, query: str, chunks: list) -> str:
+        # Prepare the prompt
+        chunk_texts = [
+            f"- {chunk['chunk_text']} (Document: {chunk['document']}, Page: {chunk['page']}, Paragraph: {chunk['paragraph']})"
+            for chunk in chunks
+        ]
+        prompt = f"""
+Given the following extracted text chunks in response to the query: \"{query}\", group them into main themes.
+For each theme, provide:
+- A short, chat-style summary
+- Supporting document citations (document name, page, paragraph)
+
+Chunks:
+{chr(10).join(chunk_texts)}
+
+Return your answer as a list of themes, each with a summary and citations.
+"""
+        try:
+            response = self.openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that synthesizes research themes from document chunks."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.4,
+                max_tokens=600
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"Error synthesizing themes: {str(e)}")
+            return "Theme synthesis failed."

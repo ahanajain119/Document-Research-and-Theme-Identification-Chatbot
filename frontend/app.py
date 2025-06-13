@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import json
 from typing import Dict, Any
+import pandas as pd
 
 # Load environment variables
 load_dotenv()
@@ -103,6 +104,17 @@ def display_search_results(results: Dict[str, Any]):
     st.text(f"Query: {results['query']}")
     st.text(f"Processed query: {results['processed_query']}")
     st.text(f"Total matches: {results['total_matches']}")
+
+    # Display theme summary if present
+    if results.get('theme_summary'):
+        st.markdown("### Synthesized Themes")
+        st.info(results['theme_summary'])
+
+    # Display results table if present
+    if results.get('results_table'):
+        df = pd.DataFrame(results['results_table'])
+        st.markdown("### Results Table")
+        st.dataframe(df)
 
     for i, result in enumerate(results['results'], 1):
         with st.expander(f"Result {i} (Score: {result['relevance_score']:.2f})", expanded=True):

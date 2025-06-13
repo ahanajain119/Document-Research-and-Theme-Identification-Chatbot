@@ -29,6 +29,8 @@ class QueryResponse(BaseModel):
     processed_query: str
     results: List[SearchResult]
     total_matches: int
+    theme_summary: str = None
+    results_table: list = []
 
 @router.post("/query", response_model=QueryResponse)
 async def query_documents(request: QueryRequest):
@@ -84,11 +86,29 @@ async def query_documents(request: QueryRequest):
             for result in filtered_results
         ]
 
+        # Theme synthesis: use top 15 filtered results (or fewer if not enough)
+        top_chunk_indices = [result["position"] for result in filtered_results[:15]]
+        top_chunks = [chunks[idx] for idx in top_chunk_indices]
+        theme_summary = query_processor.synthesize_themes(request.query, top_chunks) if top_chunks else "No relevant themes found."
+
+        # Build results_table for tabular display
+        results_table = []
+        for result in filtered_results:
+            idx = result["position"]
+            chunk = chunks[idx]
+            results_table.append({
+                "doc_id": chunk["document"],
+                "extracted_text": chunk["chunk_text"][:300] + ("..." if len(chunk["chunk_text"]) > 300 else ""),
+                "citation": f"Page {chunk['page']}, Para {chunk['paragraph']}, Sent {chunk['sentence']}"
+            })
+
         return QueryResponse(
             query=request.query,
             processed_query=processed_query,
             results=search_results,
-            total_matches=len(filtered_results)
+            total_matches=len(filtered_results),
+            theme_summary=theme_summary,
+            results_table=results_table
         )
 
     except Exception as e:
