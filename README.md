@@ -89,11 +89,4 @@ The following environment variables are required:
 
 Once the backend is running, visit `http://localhost:8000/docs` for the interactive API documentation.
 
-## Contributing
-
-Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
